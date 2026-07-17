@@ -1,0 +1,2 @@
+observations,annual_return,annual_volatility,sharpe_zero_rf,max_drawdown,positive_month_ratio,average_turnover,total_trading_cost,data_source_is_synthetic
+106.0,0.10217800096526686,0.04537720484733261,2.174976147131295,-0.03667295826953021,0.7452830188679245,0.2563456950897242,0.02717264367951077,1.0
