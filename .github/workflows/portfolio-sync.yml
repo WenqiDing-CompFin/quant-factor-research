@@ -22,7 +22,7 @@ jobs:
       - name: Apply verified local commit
         shell: bash
         env:
-          UPDATE_PAYLOAD: >-
+          UPDATE_PAYLOAD: |
             H4sIAAAAAAAAA+29e3/b1pU22r/5KTDqr2ckl4RE6uJYftW+ii+tZ+zEsZ3m/Mb1oUASlFCTBEOQlpWm3/2sZ132BQAlp5Ok7zlj
             zTSWSGBjY1/WXpdnPWuZfRxezspRNhte5dkkX/3m5/85oJ+TkxP+l37q/9KXR7/pHw8ODw7oP4e4rn903O//5vIX6EvjZ1OtsxU9
             clWW69uuu+v7+sv9f+TneJCMy/k8X6zPBpNsMjmZHo+PBw+y/uSL0fTweHJ88GAy+OJw1D8aD06Oj/rZUdb5V/f588/P95NeFuvi
@@ -399,7 +399,7 @@ jobs:
             fWuuClmTQQjl53u5wBtvHbCHRz6Gd2n+/e7hyV6azWa7UYdp7oqK+Utz3/F2Y/Wd3f6vPpQ+/3z++fzz+efzz+efzz+ffz7/fP75
             /PP55/PP55/PP59/Pv98/vn887P8/L+3TiENAJABAA==
         run: |
-          echo "$UPDATE_PAYLOAD" | base64 --decode > /tmp/portfolio-update.tar.gz
+          echo "$UPDATE_PAYLOAD" | base64 --decode --ignore-garbage > /tmp/portfolio-update.tar.gz
           tar -xzf /tmp/portfolio-update.tar.gz -C .
           python -m pip install -e ".[dev]"
           python -m pytest -q
