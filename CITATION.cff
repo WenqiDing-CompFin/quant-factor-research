@@ -1,0 +1,10 @@
+cff-version: 1.2.0
+message: "If you use this educational research scaffold, cite the repository."
+title: "Reproducible Multi-Factor Equity Research"
+type: software
+authors:
+  - family-names: Ding
+    given-names: Wenqi
+repository-code: "https://github.com/WenqiDing-CompFin/quant-factor-research"
+license: MIT
+version: 0.1.0

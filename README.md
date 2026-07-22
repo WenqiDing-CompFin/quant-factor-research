@@ -1,8 +1,18 @@
 # Reproducible Multi-Factor Equity Research
 
+[![CI](https://github.com/WenqiDing-CompFin/quant-factor-research/actions/workflows/ci.yml/badge.svg)](https://github.com/WenqiDing-CompFin/quant-factor-research/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](LICENSE)
+
 [WenqiDing-CompFin](https://github.com/WenqiDing-CompFin) maintains this educational Python project for auditable, monthly cross-sectional equity research.
 
+This is the **flagship research repository** in the portfolio. The separate
+[Quant Factor Lab](https://github.com/WenqiDing-CompFin/quant-factor-lab) is its
+interactive tutorial companion; use this repository for the formal methodology,
+failure register, tests, and reproducible artifacts.
+
 > **Synthetic-data boundary:** the default dataset is simulated and deliberately links returns to latent value, quality, and momentum structure. The included performance and IC values validate the research pipeline; they are not historical-market evidence, market alpha, or an investable result. Nothing in this repository is investment advice.
+
+![Synthetic strategy and benchmark equity curves](results/equity_curve.png)
 
 ## What the Project Does
 
@@ -174,6 +184,7 @@ Do not commit employer data, paid vendor data, confidential code, client informa
 | `results/metrics.csv` | Net portfolio summary metrics and synthetic-data flag |
 | `results/cost_sensitivity.csv` | Performance at 0/5/10/20/50 bps |
 | `results/equity_curve.png` | Growth of one dollar for the portfolio and benchmark |
+| `results/run_manifest.json` | Machine-readable data provenance, factor specification, portfolio rule, and costs |
 
 ### Default Seed-7 Synthetic Check
 
@@ -192,6 +203,12 @@ The committed artifacts currently report the following 10 bps synthetic baseline
 The synthetic generator explicitly loads returns on latent value and quality characteristics and includes short-term return persistence. These numbers are therefore expected pipeline behavior, not evidence that the factor combination works in a real market. Do not use them as performance claims in a resume, application essay, or interview.
 
 The factor diagnostics reinforce that boundary: in the default simulation, mean Rank IC is approximately 0.0016 for momentum, 0.0248 for value, 0.0427 for quality, and 0.0111 for low volatility. They describe this specific simulation only.
+
+Momentum remains in the registered four-factor baseline despite its near-zero
+synthetic IC. Removing an inconvenient pre-specified signal after seeing the
+result would create selection bias. A real-data stage should compare pre-declared
+6-1, 9-1, and 12-1 variants on development data, select at most one on validation,
+and report the frozen variant once on the final test period.
 
 ### Cost Sensitivity
 
@@ -239,6 +256,10 @@ The code pipeline is complete for its synthetic educational scope. The next empi
 - lock train, validation, and test periods before parameter selection;
 - test subperiod, regime, parameter, and capacity sensitivity;
 - document failed hypotheses alongside successful ones.
+
+The ordered closure criteria and evidence required for each step are maintained
+in [`docs/failure_analysis.md`](docs/failure_analysis.md). Items remain labeled
+open until code, data provenance, tests, and regenerated outputs support closure.
 
 ## Maintainer
 

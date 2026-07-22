@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "data": {
+    "kind": "deterministic_synthetic",
+    "input_file": null,
+    "input_sha256": null,
+    "seed": 7
+  },
+  "research_specification": {
+    "frequency": "monthly",
+    "factors": [
+      "momentum_12_1",
+      "book_to_market",
+      "roe",
+      "low_volatility_12m"
+    ],
+    "fundamental_lag_months": 3,
+    "winsorization_percentiles": [
+      0.01,
+      0.99
+    ],
+    "portfolio": "top_20_percent_equal_weight_long_only",
+    "benchmark": "equal_weight_eligible_universe",
+    "transaction_cost_bps": 10.0,
+    "cost_sensitivity_bps": [
+      0,
+      5,
+      10,
+      20,
+      50
+    ]
+  },
+  "claim_boundary": "pipeline validation only"
+}

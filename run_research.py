@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
+import json
 import sys
 from pathlib import Path
 
@@ -77,17 +79,51 @@ def main() -> None:
             }
         )
 
-    monthly.to_csv(args.output_dir / "monthly_returns.csv", index=False)
-    ic.to_csv(args.output_dir / "factor_ic.csv", index=False)
-    ic_summary.to_csv(args.output_dir / "factor_ic_summary.csv")
-    quantile_returns.to_csv(args.output_dir / "factor_quantile_returns.csv", index=False)
+    csv_options = {"lineterminator": "\n"}
+    monthly.to_csv(args.output_dir / "monthly_returns.csv", index=False, **csv_options)
+    ic.to_csv(args.output_dir / "factor_ic.csv", index=False, **csv_options)
+    ic_summary.to_csv(args.output_dir / "factor_ic_summary.csv", **csv_options)
+    quantile_returns.to_csv(
+        args.output_dir / "factor_quantile_returns.csv", index=False, **csv_options
+    )
     quantile_returns.groupby("factor").mean(numeric_only=True).to_csv(
-        args.output_dir / "factor_quantile_summary.csv"
+        args.output_dir / "factor_quantile_summary.csv", **csv_options
     )
-    pd.DataFrame([metrics]).to_csv(args.output_dir / "metrics.csv", index=False)
+    pd.DataFrame([metrics]).to_csv(
+        args.output_dir / "metrics.csv", index=False, **csv_options
+    )
     pd.DataFrame(sensitivity_rows).to_csv(
-        args.output_dir / "cost_sensitivity.csv", index=False
+        args.output_dir / "cost_sensitivity.csv", index=False, **csv_options
     )
+
+    input_sha256 = None
+    if args.input:
+        input_sha256 = hashlib.sha256(args.input.read_bytes()).hexdigest()
+    manifest = {
+        "schema_version": 1,
+        "data": {
+            "kind": "external_csv" if args.input else "deterministic_synthetic",
+            "input_file": args.input.name if args.input else None,
+            "input_sha256": input_sha256,
+            "seed": None if args.input else args.seed,
+        },
+        "research_specification": {
+            "frequency": "monthly",
+            "factors": ["momentum_12_1", "book_to_market", "roe", "low_volatility_12m"],
+            "fundamental_lag_months": 3,
+            "winsorization_percentiles": [0.01, 0.99],
+            "portfolio": "top_20_percent_equal_weight_long_only",
+            "benchmark": "equal_weight_eligible_universe",
+            "transaction_cost_bps": args.cost_bps,
+            "cost_sensitivity_bps": [0, 5, 10, 20, 50],
+        },
+        "claim_boundary": (
+            "pipeline validation only" if args.input is None else
+            "user-supplied data; point-in-time validity is not established by the loader"
+        ),
+    }
+    with (args.output_dir / "run_manifest.json").open("w", encoding="utf-8") as handle:
+        json.dump(manifest, handle, indent=2)
 
     wealth = (1.0 + monthly.set_index("signal_date")["net_return"]).cumprod()
     benchmark = (1.0 + monthly.set_index("signal_date")["benchmark_return"]).cumprod()

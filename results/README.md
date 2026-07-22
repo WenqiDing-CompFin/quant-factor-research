@@ -11,6 +11,8 @@ demo and are not evidence of real-market alpha.
 - `factor_quantile_summary.csv`: average bucket returns and top-minus-bottom spread.
 - `cost_sensitivity.csv`: results under multiple linear cost assumptions.
 - `equity_curve.png`: growth of one synthetic dollar versus the equal-weight universe.
+- `run_manifest.json`: data provenance, fixed factor definitions, portfolio rule,
+  and transaction-cost assumptions for the run.
 
 Regenerate all files from the repository root with:
 
