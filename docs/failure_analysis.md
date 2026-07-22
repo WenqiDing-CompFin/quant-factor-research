@@ -15,7 +15,10 @@ A credible quantitative project records defects, weak results, invalid claims, a
 - weak or null synthetic diagnostics that must remain visible;
 - open research limitations that block real-market conclusions.
 
-No real-market factor hypothesis has passed or failed yet. The repository currently contains a synthetic-data demonstration, not a point-in-time empirical equity study.
+No security-selection hypothesis has passed or failed on real point-in-time data.
+The repository contains a synthetic stock-level demonstration plus a separate
+official aggregate factor-return validation; the latter is not an empirical test
+of the composite stock strategy.
 
 ## 2. Historical Defects: Found and Fixed
 
@@ -54,7 +57,7 @@ The final implementation currently provides:
 - positive IC ratios based only on valid IC observations;
 - five-quantile return and top-minus-bottom outputs;
 - initial-wealth-aware maximum drawdown;
-- twelve passing regression tests.
+- fourteen passing regression tests, including offline public-data parsing and inference checks.
 
 These safeguards improve correctness. They do not solve real-data provenance, survivorship, point-in-time, or deployment problems.
 
@@ -94,10 +97,10 @@ The hard error prevents silent omission. It does not supply the correct delistin
 
 | ID | Severity | Open limitation | Why it matters | Required closure evidence | Status |
 |---|---|---|---|---|---|
-| OPEN-01 | Critical | Synthetic-only evidence | Engineered data cannot establish a real market relationship. | Reproduce the study on an audited real monthly panel. | Open |
+| OPEN-01 | Critical | No real security-level strategy evidence | Aggregate public factor portfolios do not validate this repository's stock-selection rule. | Reproduce the study on an audited point-in-time monthly security panel. | Open |
 | OPEN-02 | Critical | No actual fundamental publication dates | Mechanical three-month lags can still use unavailable or revised information. | Point-in-time joins based on original public availability timestamps. | Open |
 | OPEN-03 | Critical | No real inactive/delisted security dataset | A current-survivor panel can overstate returns and understate loss. | Historical universe plus validated delisting returns and identifier mapping. | Open |
-| OPEN-04 | Critical | No chronological untouched test | Reusing all observations for research encourages overfit conclusions. | Frozen specification evaluated once on a held-out final period. | Open |
+| OPEN-04 | Critical | No chronological untouched stock-level test | Reusing all security observations for research encourages overfit conclusions. | Frozen stock-level specification evaluated once on a held-out final period. | Open |
 | OPEN-05 | High | No sector or size neutralization | Composite returns may be industry or capitalization bets. | Raw and neutralized factor diagnostics with exposure reports. | Open |
 | OPEN-06 | High | No beta or common-risk attribution | Lower risk or market exposure can be mistaken for alpha. | Benchmark-relative regression and exposure-matched comparisons. | Open |
 | OPEN-07 | High | No historical investability rules | Tiny, illiquid, suspended, or invalid share classes can inflate paper returns. | Point-in-time price, size, liquidity, exchange, share-class, and suspension filters. | Open |
@@ -105,11 +108,11 @@ The hard error prevents silent omission. It does not supply the correct delistin
 | OPEN-09 | High | Flat transaction-cost model | Sensitivity is implemented, but cost realism is not. | Spread, impact, delay, tax, and capacity estimates by liquidity bucket. | Open |
 | OPEN-10 | Medium | Benchmark analysis is basic | Monthly benchmark and excess returns exist, but no tracking error, information ratio, or beta summary is exported. | Reproducible benchmark-relative metric and attribution report. | Open |
 | OPEN-11 | Medium | Quantile implementation analysis is incomplete | Quantile returns and top-minus-bottom spreads exist, but quantile turnover, costs, and uncertainty are not reported. | Add quantile portfolio turnover, costs, confidence intervals, and subperiod diagnostics. | Open |
-| OPEN-12 | High | No dependence-robust inference | Mean IC can look stable while uncertainty is understated. | Confidence intervals and serial-dependence-aware inference where appropriate. | Open |
+| OPEN-12 | High | No dependence-robust stock-level inference | The public factor module has Newey-West mean inference, but stock-level mean IC can still look stable while uncertainty is understated. | Stock-level confidence intervals and serial-dependence-aware inference where appropriate. | Open |
 | OPEN-13 | High | Multiple-testing history absent | Trying many variants can generate a winner by chance. | Experiment registry, frozen baseline, and multiple-comparison control. | Open |
 | OPEN-14 | Medium | Exact environment is not locked | Version ranges can resolve to different dependency versions later. | Exact lock file and clean-environment reproduction record. | Open |
 | OPEN-15 | High | Capacity and operations untested | A statistically positive signal may not be executable at useful scale. | Capacity model, execution-delay stress, and paper-trading operations log. | Open |
-| OPEN-16 | Medium | Real-data legal provenance unspecified | A public repository cannot redistribute data without permission. | Data license review and a documented acquisition procedure. | Open |
+| OPEN-16 | Medium | Security-level real-data legal provenance unspecified | The official factor downloads are sourced, but a public stock panel cannot be redistributed without permission. | Security-level data license review and a documented acquisition procedure. | Open |
 
 ## 6. Weak and Null Synthetic Findings Kept Visible
 
@@ -276,8 +279,12 @@ An unavoidable issue may be marked `Accepted limitation` only when its likely di
 
 ## 11. Current Bottom Line
 
-The final implementation is materially more reliable than the initial prototype. The cross-ticker shift, partial-factor mean, `groupby.first` holding-period behavior, drift-aware turnover accounting, initial drawdown, IC denominator, monthly-gap, intermediate missing-return, low-eligibility skip, and low-volatility timing defects have been found and fixed. Rank IC, factor quantiles, the eligible-universe benchmark, and cost sensitivity are now implemented, with twelve passing tests protecting the principal boundaries.
+The final implementation is materially more reliable than the initial prototype. The cross-ticker shift, partial-factor mean, `groupby.first` holding-period behavior, drift-aware turnover accounting, initial drawdown, IC denominator, monthly-gap, intermediate missing-return, low-eligibility skip, and low-volatility timing defects have been found and fixed. Rank IC, factor quantiles, the eligible-universe benchmark, cost sensitivity, and a separate official public-factor validation path are now implemented, with fourteen passing tests protecting the principal boundaries.
 
-The remaining blockers are research-data and validation problems, not hidden fixes to the reported synthetic numbers. Until actual publication dates, delistings, real data, a frozen out-of-sample test, neutralization, and realistic implementation analysis are added, the correct conclusion is:
+The remaining blockers are security-level research-data and validation problems,
+not hidden fixes to the reported synthetic numbers. Until actual publication
+dates, delistings, a real security panel, a frozen out-of-sample test,
+neutralization, and realistic implementation analysis are added, the correct
+conclusion is:
 
 > This repository is a reproducible synthetic-data research pipeline, not a validated trading strategy.

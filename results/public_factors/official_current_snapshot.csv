@@ -1,0 +1,6 @@
+as_of,factor,one_month_percent,trailing_3_month_percent,trailing_12_month_percent,source
+2026-05-31,market_excess,4.90,9.42,25.63,https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+2026-05-31,size_smb,-2.77,-1.89,6.14,https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+2026-05-31,value_hml,-2.15,0.42,14.53,https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+2026-05-31,profitability_rmw,-8.42,-15.98,-27.50,https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html
+2026-05-31,investment_cma,-1.39,-5.28,-2.92,https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html

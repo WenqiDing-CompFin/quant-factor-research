@@ -1,0 +1,17 @@
+AUTHORS.md
+LICENSE
+README.md
+pyproject.toml
+src/quant_factor/__init__.py
+src/quant_factor/backtest.py
+src/quant_factor/data.py
+src/quant_factor/factors.py
+src/quant_factor/metrics.py
+src/quant_factor/public_data.py
+src/reproducible_multifactor_research.egg-info/PKG-INFO
+src/reproducible_multifactor_research.egg-info/SOURCES.txt
+src/reproducible_multifactor_research.egg-info/dependency_links.txt
+src/reproducible_multifactor_research.egg-info/requires.txt
+src/reproducible_multifactor_research.egg-info/top_level.txt
+tests/test_public_data.py
+tests/test_research.py

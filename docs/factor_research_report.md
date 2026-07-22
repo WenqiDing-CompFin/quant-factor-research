@@ -2,7 +2,12 @@
 
 **Author:** WenqiDing-CompFin
 
-**Project stage:** Reproducible synthetic-data research pipeline
+**Project stage:** Reproducible synthetic stock-level pipeline plus separate public factor-return validation
+
+The companion [`public_factor_validation.md`](public_factor_validation.md)
+documents the official Kenneth French five-factor and momentum return path. It
+adds real aggregate factor evidence while leaving every stock-selection claim in
+this report subject to the synthetic-data boundary below.
 
 **Research status:** Engineering validation only; no real-market alpha claim
 
@@ -18,7 +23,10 @@ The default run uses deterministic synthetic data. The synthetic generator delib
 
 The implementation now addresses important timing and accounting defects found in the earlier prototype: ticker boundaries are respected, monthly gaps are rejected, low-volatility inputs are lagged, the composite requires all four factors, next-period returns are calculated directly rather than selected with `groupby.first`, turnover uses a one-way weight-change definition, drawdown includes losses from the initial wealth level, and positive IC ratios use only valid IC observations. These behaviors are supported by automated tests and explicit source checks.
 
-The next valid research milestone is a study using licensed or public real data with actual publication timestamps, inactive and delisted securities, an untouched out-of-sample period, investability filters, and sector and size controls.
+The next valid stock-level research milestone is a study using licensed or public
+security data with actual publication timestamps, inactive and delisted
+securities, an untouched out-of-sample period, investability filters, and sector
+and size controls.
 
 ## 1. Research Question
 
@@ -320,7 +328,7 @@ The monthly result file includes `benchmark_return` and `excess_return`, and the
 
 ## 12. Automated Tests
 
-The current test suite covers twelve behaviors:
+The current test suite covers fourteen behaviors:
 
 - synthetic data are deterministic for a fixed seed;
 - next-month returns do not cross ticker boundaries;
@@ -334,6 +342,8 @@ The current test suite covers twelve behaviors:
 - an all-missing future-return intermediate month raises rather than being skipped;
 - turnover uses return-drifted pretrade weights rather than prior target weights.
 - an undersized eligible universe after portfolio formation raises rather than skipping an intermediate month.
+- the official public-factor CSV parser reads only monthly observations and converts percentages to decimals.
+- public factor summaries return finite dependence-aware statistics for a declared evaluation sample.
 
 The test suite passes in the current workspace. These tests materially improve implementation reliability, but they do not test whether factors work in real markets.
 
@@ -360,7 +370,8 @@ The test suite passes in the current workspace. These tests materially improve i
 
 The following items prevent a real alpha or deployability claim:
 
-- no real equity dataset has been included or evaluated;
+- no real security-level equity panel has been included or evaluated; the public
+  factor returns are constructed aggregate portfolios;
 - the three-month fundamental lag is not based on actual publication dates;
 - there is no original-vintage or restatement-aware fundamental database;
 - inactive and delisted securities and their final returns are not supplied;

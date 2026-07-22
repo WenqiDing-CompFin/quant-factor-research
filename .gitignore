@@ -10,3 +10,4 @@ venv/
 data/raw/
 data/private/
 results/*.tmp
+results/public_factors/generated/

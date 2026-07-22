@@ -7,12 +7,46 @@
 
 This is the **flagship research repository** in the portfolio. The separate
 [Quant Factor Lab](https://github.com/WenqiDing-CompFin/quant-factor-lab) is its
-interactive tutorial companion; use this repository for the formal methodology,
-failure register, tests, and reproducible artifacts.
+interactive demo; use only this repository as the primary application or CV
+link. It contains the formal methodology, failure register, tests, real-data
+validation path, and reproducible artifacts.
 
 > **Synthetic-data boundary:** the default dataset is simulated and deliberately links returns to latent value, quality, and momentum structure. The included performance and IC values validate the research pipeline; they are not historical-market evidence, market alpha, or an investable result. Nothing in this repository is investment advice.
 
 ![Synthetic strategy and benchmark equity curves](results/equity_curve.png)
+
+## Evidence Map
+
+| Evidence track | Data | What it establishes | What it does not establish |
+|---|---|---|---|
+| Stock-level research pipeline | Deterministic synthetic panel | Timing, ranking, portfolio accounting, transaction costs, failure behavior, and reproducibility | Historical alpha or an investable strategy |
+| Public factor validation | Official Kenneth French U.S. factor portfolios | Real market factor regimes, long-history summary statistics, dependence-aware inference, and subperiod stability | Performance of this repository's composite stock strategy |
+
+## Public Real-Market Check
+
+The repository now includes an official current-return snapshot and a reproducible
+downloader for the [Kenneth French Data Library](https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html).
+As reported by the source for May 2026:
+
+| Factor | May 2026 | Last 3 months | Last 12 months |
+|---|---:|---:|---:|
+| Market excess | 4.90% | 9.42% | 25.63% |
+| Size (`SMB`) | -2.77% | -1.89% | 6.14% |
+| Value (`HML`) | -2.15% | 0.42% | 14.53% |
+| Profitability (`RMW`) | -8.42% | -15.98% | -27.50% |
+| Investment (`CMA`) | -1.39% | -5.28% | -2.92% |
+
+The mixed signs are intentional evidence, not a presentation problem: factor
+returns are regime-dependent. Run the full official monthly-history validation:
+
+```bash
+python run_public_factor_validation.py --start-date 1990-01-01
+```
+
+The script records source URLs and archive SHA-256 hashes and reports fixed
+subperiods plus a six-lag Newey-West t-statistic. See the
+[public real-data protocol](docs/public_factor_validation.md) for methodology and
+claim boundaries.
 
 ## What the Project Does
 
@@ -29,14 +63,19 @@ The repository implements an end-to-end research baseline:
 - weight-based one-way turnover and configurable transaction costs;
 - 0/5/10/20/50 bps cost-sensitivity analysis;
 - portfolio return, volatility, zero-risk-free-rate Sharpe ratio, drawdown, hit-rate, turnover, and cost outputs;
-- twelve automated tests covering determinism, ticker boundaries, signal timing, composite eligibility, missing future returns, monthly continuity, universe coverage, drift-aware turnover, annualization, and drawdown;
+- official five-factor and momentum archive parsing, provenance hashes, fixed-subperiod analysis, and Newey-West mean inference;
+- fourteen automated tests covering the synthetic pipeline and offline public-data parsing and statistics;
 - reproducible CSV results and an equity-curve chart written to `results/`.
 
 ## Research Question
 
 Can a transparent combination of momentum, value, quality, and low-volatility characteristics produce a stable cross-sectional ranking after explicit timing, turnover, benchmark, and transaction-cost controls?
 
-The current repository answers this question only inside a controlled synthetic experiment. Moving from pipeline validation to an empirical market conclusion requires licensed or redistributable historical data with real publication timestamps, delisting returns, and documented universe membership.
+The stock-level pipeline answers this question only inside a controlled synthetic
+experiment. The public module adds real constructed factor-portfolio evidence,
+but moving to a stock-selection conclusion still requires historical security
+data with real publication timestamps, delisting returns, and documented universe
+membership.
 
 ## Factor Definitions
 
@@ -74,9 +113,11 @@ quant-factor-research/
 |-- README.md
 |-- requirements.txt
 |-- run_research.py
+|-- run_public_factor_validation.py
 |-- docs/
 |   |-- factor_research_report.md
 |   |-- failure_analysis.md
+|   |-- public_factor_validation.md
 |   |-- project_introduction.md
 |   |-- resume_bullets.md
 |   `-- logs/
@@ -90,16 +131,20 @@ quant-factor-research/
 |   |-- factor_quantile_returns.csv
 |   |-- factor_quantile_summary.csv
 |   |-- metrics.csv
-|   `-- monthly_returns.csv
+|   |-- monthly_returns.csv
+|   `-- public_factors/
+|       `-- official_current_snapshot.csv
 |-- src/
 |   `-- quant_factor/
 |       |-- __init__.py
 |       |-- backtest.py
 |       |-- data.py
 |       |-- factors.py
-|       `-- metrics.py
+|       |-- metrics.py
+|       `-- public_data.py
 `-- tests/
-    `-- test_research.py
+    |-- test_research.py
+    `-- test_public_data.py
 ```
 
 ## Installation
@@ -135,7 +180,7 @@ python -m pytest -q
 Expected test summary:
 
 ```text
-12 passed
+14 passed
 ```
 
 Change the transaction-cost assumption or synthetic seed:
@@ -185,6 +230,7 @@ Do not commit employer data, paid vendor data, confidential code, client informa
 | `results/cost_sensitivity.csv` | Performance at 0/5/10/20/50 bps |
 | `results/equity_curve.png` | Growth of one dollar for the portfolio and benchmark |
 | `results/run_manifest.json` | Machine-readable data provenance, factor specification, portfolio rule, and costs |
+| `results/public_factors/official_current_snapshot.csv` | Official May 2026 real factor-return snapshot with source URL |
 
 ### Default Seed-7 Synthetic Check
 
@@ -216,7 +262,7 @@ The pipeline reruns the complete portfolio calculation at five cost assumptions.
 
 ## Test Coverage
 
-The twelve tests verify that:
+The fourteen tests verify that:
 
 1. synthetic generation is deterministic for a fixed seed;
 2. future returns do not leak across ticker boundaries;
@@ -230,12 +276,15 @@ The twelve tests verify that:
 10. an intermediate month with no future returns raises instead of being skipped;
 11. turnover compares target weights with return-drifted pretrade weights.
 12. an undersized eligible universe after the backtest starts raises instead of silently skipping a holding period.
+13. the public-data parser reads the monthly block, converts percentages to decimals, and stops before annual summaries;
+14. real factor summaries produce finite dependence-aware statistics over the declared period.
 
 The tests reduce implementation risk but do not validate the economic hypothesis or prove the absence of every form of leakage.
 
 ## Known Limitations
 
-- All committed results are synthetic-only.
+- Stock-level strategy results remain synthetic-only; the committed real-data
+  artifact contains official aggregate factor portfolios, not security selections.
 - The simulation has no delistings, index changes, trading halts, corporate actions, liquidity limits, or market-capacity constraints.
 - A uniform three-month accounting lag is only a demo approximation to real publication timing.
 - Signals use information ending at `t-1` or earlier, but the monthly model assumes rebalancing at the `t` close and does not simulate next-session prices, spread, or slippage.
@@ -243,11 +292,12 @@ The tests reduce implementation risk but do not validate the economic hypothesis
 - No industry, size, beta, or country neutralization is applied.
 - There is no train/validation/test split because the current dataset is a pipeline simulation, not a fitted predictive model.
 - Costs are linear in turnover and omit spread, nonlinear impact, borrow, tax, and capacity effects.
-- IC inference does not include Newey-West errors, multiple-testing correction, or regime analysis.
+- Stock-level IC inference does not yet include Newey-West errors or multiple-testing correction; the public factor module adds Newey-West mean inference and fixed regime summaries only for aggregate factor portfolios.
 
 ## Next Research Stage
 
-The code pipeline is complete for its synthetic educational scope. The next empirical stage is to:
+The synthetic engine and public factor validation are complete for their stated
+scope. The next empirical stock-level stage is to:
 
 - source legally usable historical data with point-in-time fundamentals and delisting returns;
 - define an investable universe and explicit next-session execution rule;
