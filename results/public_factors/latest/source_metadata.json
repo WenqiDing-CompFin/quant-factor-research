@@ -1,0 +1,44 @@
+{
+  "source_page": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
+  "return_unit": "decimal monthly return",
+  "five_factor_archive": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Research_Data_5_Factors_2x3_CSV.zip",
+    "cache_file": "F-F_Research_Data_5_Factors_2x3_CSV.zip",
+    "archive_member": "F-F_Research_Data_5_Factors_2x3.csv",
+    "sha256": "ddc0280b2bb8ca6c4c6ea5b68923a5549c37259bde468202108c11e812bd4241"
+  },
+  "momentum_archive": {
+    "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_CSV.zip",
+    "cache_file": "F-F_Momentum_Factor_CSV.zip",
+    "archive_member": "F-F_Momentum_Factor.csv",
+    "sha256": "37baf72ae4eace9715e8746413d0122334c63aa4083fd1c3cf2060fa04e4bd28"
+  },
+  "combined_start": "1963-07-31",
+  "combined_end": "2026-05-31",
+  "observations": 755,
+  "claim_boundary": "Official constructed factor portfolios; not a security-level backtest of this repository's composite strategy.",
+  "declared_evaluation_start": "1990-01-01",
+  "momentum_decile_portfolios": {
+    "source_page": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
+    "portfolio_detail": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/Data_Library/det_10_port_form_pr_12_2.html",
+    "formation_rule": "NYSE prior (2-12) return decile breakpoints",
+    "weighting": "value weighted",
+    "return_unit": "decimal monthly return",
+    "archive": {
+      "url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/10_Portfolios_Prior_12_2_CSV.zip",
+      "cache_file": "10_Portfolios_Prior_12_2_CSV.zip",
+      "archive_member": "10_Portfolios_Prior_12_2.csv",
+      "sha256": "ca0af27fa0829ed6ac38b7b13b20cc11fd12274a8d06dac226998dfc1d0f07f6"
+    },
+    "combined_start": "1927-01-31",
+    "combined_end": "2026-05-31",
+    "observations": 1193,
+    "claim_boundary": "Official characteristic-sorted research portfolios, not a tradable security-level strategy reconstructed by this repository."
+  },
+  "momentum_reporting_partitions": {
+    "development": "1927-01 through 1989-12",
+    "validation": "1990-01 through 2014-12",
+    "holdout": "2015-01 through latest",
+    "interpretation": "Retrospective fixed partitions; not a claim of a historically untouched prospective test."
+  }
+}

@@ -50,6 +50,27 @@ and a cumulative-return chart.
 The fixed regimes are 1990-2006, 2007-2019, and 2020-latest. They are declared in
 code rather than selected after inspecting favorable results.
 
+## Characteristic-Sorted Portfolio Check
+
+The analysis also downloads the official ten value-weighted portfolios formed
+monthly on NYSE prior (2-12) return decile breakpoints. This gives a real-market
+cross-sectional check without claiming access to point-in-time security records.
+
+| Period | P10-P1 annualized mean | Annualized volatility | NW t-stat | Rank correlation | Positive adjacent steps |
+|---|---:|---:|---:|---:|---:|
+| 1927-1989 development | 15.59% | 26.51% | 5.11 | 1.00 | 9/9 |
+| 1990-2014 validation | 11.60% | 28.40% | 1.89 | 0.93 | 7/9 |
+| 2015-May 2026 holdout | 8.72% | 30.36% | 1.05 | 0.37 | 4/9 |
+
+The latest segment weakens on every listed dimension. The mean P10-P1 spread is
+positive but its six-lag Newey-West t-statistic is only 1.05, and average returns
+are not monotonic across the ten portfolios. This is a failure of strong
+stability, not a reason to change the partition or drop the result.
+
+The word `holdout` describes a frozen repository reporting period. It is not a
+claim that post-2015 momentum evidence was unknown to the literature or to the
+project author before this analysis.
+
 ## Methodology Boundary
 
 The Data Library states that its U.S. research returns switched from CRSP's

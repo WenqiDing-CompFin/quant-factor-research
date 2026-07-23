@@ -6,6 +6,8 @@ from .factors import build_factor_panel, compute_factor_ic, compute_quantile_ret
 from .metrics import performance_metrics
 from .public_data import (
     load_public_factor_returns,
+    load_public_momentum_portfolios,
+    momentum_decile_validation,
     public_factor_subperiod_summary,
     public_factor_summary,
 )
@@ -19,6 +21,8 @@ __all__ = [
     "load_panel",
     "performance_metrics",
     "load_public_factor_returns",
+    "load_public_momentum_portfolios",
+    "momentum_decile_validation",
     "public_factor_subperiod_summary",
     "public_factor_summary",
     "validate_panel",

@@ -10,4 +10,4 @@ venv/
 data/raw/
 data/private/
 results/*.tmp
-results/public_factors/generated/
+results/public_factors/latest/monthly_*.csv

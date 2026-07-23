@@ -13,7 +13,7 @@ validation path, and reproducible artifacts.
 
 > **Synthetic-data boundary:** the default dataset is simulated and deliberately links returns to latent value, quality, and momentum structure. The included performance and IC values validate the research pipeline; they are not historical-market evidence, market alpha, or an investable result. Nothing in this repository is investment advice.
 
-![Synthetic strategy and benchmark equity curves](results/equity_curve.png)
+![Official momentum portfolio spread across fixed reporting periods](results/public_factors/latest/momentum_spread_wealth.png)
 
 ## Evidence Map
 
@@ -21,6 +21,7 @@ validation path, and reproducible artifacts.
 |---|---|---|---|
 | Stock-level research pipeline | Deterministic synthetic panel | Timing, ranking, portfolio accounting, transaction costs, failure behavior, and reproducibility | Historical alpha or an investable strategy |
 | Public factor validation | Official Kenneth French U.S. factor portfolios | Real market factor regimes, long-history summary statistics, dependence-aware inference, and subperiod stability | Performance of this repository's composite stock strategy |
+| Characteristic-sorted portfolios | Official value-weighted U.S. momentum deciles | Whether prior-return sorting remains monotonic and statistically stable across fixed reporting periods | A security-level reconstruction, feasible execution, or prospective discovery |
 
 ## Public Real-Market Check
 
@@ -48,6 +49,25 @@ subperiods plus a six-lag Newey-West t-statistic. See the
 [public real-data protocol](docs/public_factor_validation.md) for methodology and
 claim boundaries.
 
+### Fixed-period momentum evidence
+
+The same command also downloads the official value-weighted portfolios formed on
+NYSE prior (2-12) return decile breakpoints. It reports a P10-minus-P1 research
+spread and cross-decile monotonicity over fixed retrospective partitions:
+
+| Period | Annualized mean spread | Annualized volatility | Newey-West t-stat | Mean-return rank correlation |
+|---|---:|---:|---:|---:|
+| Development, 1927-1989 | 15.59% | 26.51% | 5.11 | 1.00 |
+| Validation, 1990-2014 | 11.60% | 28.40% | 1.89 | 0.93 |
+| Holdout, 2015-May 2026 | 8.72% | 30.36% | 1.05 | 0.37 |
+
+The latest period is the important result: the average spread remains positive,
+but dependence-aware evidence and cross-decile monotonicity weaken materially.
+Only four of nine adjacent mean-return steps are positive in the holdout. This is
+reported as instability, not reframed as a successful trading strategy. The
+partitions are fixed for reporting but are not claimed to be historically
+untouched by the broader momentum literature.
+
 ## What the Project Does
 
 The repository implements an end-to-end research baseline:
@@ -64,7 +84,7 @@ The repository implements an end-to-end research baseline:
 - 0/5/10/20/50 bps cost-sensitivity analysis;
 - portfolio return, volatility, zero-risk-free-rate Sharpe ratio, drawdown, hit-rate, turnover, and cost outputs;
 - official five-factor and momentum archive parsing, provenance hashes, fixed-subperiod analysis, and Newey-West mean inference;
-- fourteen automated tests covering the synthetic pipeline and offline public-data parsing and statistics;
+- sixteen automated tests covering the synthetic pipeline and offline public-data parsing and statistics;
 - reproducible CSV results and an equity-curve chart written to `results/`.
 
 ## Research Question
@@ -231,6 +251,9 @@ Do not commit employer data, paid vendor data, confidential code, client informa
 | `results/equity_curve.png` | Growth of one dollar for the portfolio and benchmark |
 | `results/run_manifest.json` | Machine-readable data provenance, factor specification, portfolio rule, and costs |
 | `results/public_factors/official_current_snapshot.csv` | Official May 2026 real factor-return snapshot with source URL |
+| `results/public_factors/latest/factor_summary.csv` | Full-history real factor metrics with Newey-West inference |
+| `results/public_factors/latest/momentum_decile_summary.csv` | Fixed-period momentum spread and monotonicity evidence |
+| `results/public_factors/latest/source_metadata.json` | Source URLs, archive members, SHA-256 hashes, and claim boundaries |
 
 ### Default Seed-7 Synthetic Check
 
@@ -262,7 +285,7 @@ The pipeline reruns the complete portfolio calculation at five cost assumptions.
 
 ## Test Coverage
 
-The fourteen tests verify that:
+The sixteen tests verify that:
 
 1. synthetic generation is deterministic for a fixed seed;
 2. future returns do not leak across ticker boundaries;
@@ -278,6 +301,8 @@ The fourteen tests verify that:
 12. an undersized eligible universe after the backtest starts raises instead of silently skipping a holding period.
 13. the public-data parser reads the monthly block, converts percentages to decimals, and stops before annual summaries;
 14. real factor summaries produce finite dependence-aware statistics over the declared period.
+15. the named value-weighted monthly portfolio block is selected without mixing equal-weighted or annual sections.
+16. fixed momentum reporting partitions and cross-decile monotonicity statistics are well formed.
 
 The tests reduce implementation risk but do not validate the economic hypothesis or prove the absence of every form of leakage.
 

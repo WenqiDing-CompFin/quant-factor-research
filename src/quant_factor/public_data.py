@@ -14,6 +14,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from .metrics import performance_metrics
+
 
 OFFICIAL_SOURCE_PAGE = (
     "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
@@ -26,6 +28,10 @@ MOMENTUM_URL = (
     "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
     "F-F_Momentum_Factor_CSV.zip"
 )
+MOMENTUM_PORTFOLIOS_URL = (
+    "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/"
+    "10_Portfolios_Prior_12_2_CSV.zip"
+)
 PUBLIC_FACTOR_COLUMNS = (
     "market_excess",
     "size",
@@ -34,6 +40,7 @@ PUBLIC_FACTOR_COLUMNS = (
     "investment",
     "momentum",
 )
+MOMENTUM_DECILE_COLUMNS = tuple(f"p{index:02d}" for index in range(1, 11))
 
 
 def parse_french_monthly_csv(
@@ -72,6 +79,61 @@ def parse_french_monthly_csv(
         records.append(record)
     if not records:
         raise ValueError("No monthly observations found in public factor CSV")
+    return pd.DataFrame.from_records(records).sort_values("date").reset_index(drop=True)
+
+
+def parse_french_portfolio_block(
+    text: str,
+    block_title: str,
+    output_columns: tuple[str, ...],
+) -> pd.DataFrame:
+    """Parse one named monthly portfolio block from a Data Library CSV."""
+    rows = list(csv.reader(io.StringIO(text)))
+    title_index = next(
+        (
+            index
+            for index, row in enumerate(rows)
+            if row and block_title.lower() in row[0].strip().lower()
+        ),
+        None,
+    )
+    if title_index is None:
+        raise ValueError(f"Could not find portfolio block: {block_title}")
+
+    header_index = next(
+        (
+            index
+            for index in range(title_index + 1, len(rows))
+            if rows[index] and any(value.strip() for value in rows[index][1:])
+        ),
+        None,
+    )
+    if header_index is None:
+        raise ValueError(f"Could not find header after portfolio block: {block_title}")
+    source_columns = [value.strip() for value in rows[header_index][1:]]
+    if len(source_columns) != len(output_columns):
+        raise ValueError(
+            f"Expected {len(output_columns)} portfolios, found {len(source_columns)}"
+        )
+
+    records: list[dict[str, object]] = []
+    for row in rows[header_index + 1 :]:
+        if not row:
+            break
+        month = row[0].strip()
+        if not re.fullmatch(r"\d{6}", month):
+            break
+        if len(row) < len(output_columns) + 1:
+            raise ValueError(f"Incomplete portfolio row for {month}")
+        record: dict[str, object] = {
+            "date": pd.Period(month, freq="M").to_timestamp("M")
+        }
+        for position, output_column in enumerate(output_columns, start=1):
+            value = float(row[position].strip())
+            record[output_column] = np.nan if value <= -99.0 else value / 100.0
+        records.append(record)
+    if not records:
+        raise ValueError(f"No monthly observations found in block: {block_title}")
     return pd.DataFrame.from_records(records).sort_values("date").reset_index(drop=True)
 
 
@@ -147,6 +209,39 @@ def load_public_factor_returns(
         ),
     }
     return merged, metadata
+
+
+def load_public_momentum_portfolios(
+    cache_dir: str | Path = "data/raw/fama_french",
+) -> tuple[pd.DataFrame, dict[str, object]]:
+    """Load official value-weighted portfolios sorted on prior 12-to-2 return."""
+    text, archive_metadata = _read_archive(
+        MOMENTUM_PORTFOLIOS_URL, Path(cache_dir)
+    )
+    returns = parse_french_portfolio_block(
+        text,
+        block_title="Value Weight Returns -- Monthly",
+        output_columns=MOMENTUM_DECILE_COLUMNS,
+    )
+    metadata = {
+        "source_page": OFFICIAL_SOURCE_PAGE,
+        "portfolio_detail": (
+            "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/"
+            "Data_Library/det_10_port_form_pr_12_2.html"
+        ),
+        "formation_rule": "NYSE prior (2-12) return decile breakpoints",
+        "weighting": "value weighted",
+        "return_unit": "decimal monthly return",
+        "archive": archive_metadata,
+        "combined_start": str(returns["date"].min().date()),
+        "combined_end": str(returns["date"].max().date()),
+        "observations": len(returns),
+        "claim_boundary": (
+            "Official characteristic-sorted research portfolios, not a tradable "
+            "security-level strategy reconstructed by this repository."
+        ),
+    }
+    return returns, metadata
 
 
 def newey_west_mean_tstat(returns: pd.Series, lags: int = 6) -> float:
@@ -227,3 +322,73 @@ def public_factor_subperiod_summary(factor_returns: pd.DataFrame) -> pd.DataFram
         summary.insert(0, "period", label)
         rows.append(summary)
     return pd.concat(rows, ignore_index=True) if rows else pd.DataFrame()
+
+
+def momentum_decile_validation(
+    portfolio_returns: pd.DataFrame,
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    """Evaluate fixed reporting periods for official momentum decile portfolios.
+
+    These are retrospective reporting partitions, not a claim that the latest
+    period was untouched during all prior research on momentum.
+    """
+    missing = set(MOMENTUM_DECILE_COLUMNS).difference(portfolio_returns.columns)
+    if missing:
+        raise ValueError(f"Missing momentum decile columns: {sorted(missing)}")
+    periods = (
+        ("development", "1927-01-01", "1989-12-31"),
+        ("validation", "1990-01-01", "2014-12-31"),
+        ("holdout", "2015-01-01", None),
+    )
+    dates = pd.to_datetime(portfolio_returns["date"])
+    summary_rows: list[dict[str, object]] = []
+    decile_rows: list[dict[str, object]] = []
+    for label, start, end in periods:
+        mask = dates.ge(pd.Timestamp(start))
+        if end:
+            mask &= dates.le(pd.Timestamp(end))
+        sample = portfolio_returns.loc[mask, ["date", *MOMENTUM_DECILE_COLUMNS]]
+        sample = sample.dropna(subset=list(MOMENTUM_DECILE_COLUMNS), how="any")
+        if sample.empty:
+            continue
+        means = sample.loc[:, MOMENTUM_DECILE_COLUMNS].mean()
+        spread = sample["p10"] - sample["p01"]
+        spread_metrics = performance_metrics(spread)
+        monotonicity = pd.Series(range(1, 11), dtype=float).corr(
+            pd.Series(means.to_numpy(dtype=float)), method="spearman"
+        )
+        adjacent_steps = np.diff(means.to_numpy(dtype=float))
+        summary_rows.append(
+            {
+                "period": label,
+                "start_date": str(sample["date"].min().date()),
+                "end_date": str(sample["date"].max().date()),
+                "observations": len(sample),
+                "p10_minus_p01_annualized_mean": float(spread.mean() * 12.0),
+                "p10_minus_p01_annualized_volatility": float(
+                    spread.std(ddof=1) * math.sqrt(12.0)
+                ),
+                "p10_minus_p01_sharpe_zero_rf": spread_metrics[
+                    "sharpe_zero_rf"
+                ],
+                "p10_minus_p01_max_drawdown": spread_metrics["max_drawdown"],
+                "p10_minus_p01_positive_month_ratio": float(spread.gt(0).mean()),
+                "p10_minus_p01_newey_west_tstat": newey_west_mean_tstat(
+                    spread, lags=6
+                ),
+                "mean_return_rank_correlation": float(monotonicity),
+                "positive_adjacent_step_ratio": float((adjacent_steps > 0).mean()),
+            }
+        )
+        for number, column in enumerate(MOMENTUM_DECILE_COLUMNS, start=1):
+            decile_rows.append(
+                {
+                    "period": label,
+                    "decile": number,
+                    "portfolio": column,
+                    "annualized_mean_return": float(means[column] * 12.0),
+                }
+            )
+    if not summary_rows:
+        raise ValueError("No observations remain in fixed momentum reporting periods")
+    return pd.DataFrame(summary_rows), pd.DataFrame(decile_rows)
