@@ -13,7 +13,7 @@ an interactive demo available from the flagship repository.
 
 - Evaluated factor rankings with monthly Rank IC/ICIR and five-quantile return spreads, then constructed an equal-weight top-quintile portfolio against an eligible-universe benchmark with return-drift-aware one-way turnover and automated 0-50 bps transaction-cost sensitivity.
 
-- Developed fourteen pytest checks for deterministic generation, ticker-level return boundaries, momentum timing, composite eligibility, missing returns, monthly continuity, universe coverage, drift-aware turnover, annualization, drawdown, and public-data parsing and inference.
+- Developed sixteen pytest checks for deterministic generation, ticker-level return boundaries, momentum timing, composite eligibility, missing returns, monthly continuity, universe coverage, drift-aware turnover, annualization, drawdown, public-data parsing and inference, portfolio-block selection, and fixed-period momentum monotonicity.
 - Added a source-audited real-data module for official Fama-French five-factor and momentum portfolio returns, recording archive hashes and reporting fixed subperiods with Newey-West mean t-statistics while keeping aggregate factor evidence separate from the synthetic stock strategy.
 
 ## Usage Notes

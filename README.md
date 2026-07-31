@@ -200,7 +200,7 @@ python -m pytest -q
 Expected test summary:
 
 ```text
-14 passed
+16 passed
 ```
 
 Change the transaction-cost assumption or synthetic seed:

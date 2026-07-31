@@ -57,7 +57,7 @@ The final implementation currently provides:
 - positive IC ratios based only on valid IC observations;
 - five-quantile return and top-minus-bottom outputs;
 - initial-wealth-aware maximum drawdown;
-- fourteen passing regression tests, including offline public-data parsing and inference checks.
+- sixteen passing regression tests, including offline public-data parsing and inference checks.
 
 These safeguards improve correctness. They do not solve real-data provenance, survivorship, point-in-time, or deployment problems.
 
@@ -279,7 +279,7 @@ An unavoidable issue may be marked `Accepted limitation` only when its likely di
 
 ## 11. Current Bottom Line
 
-The final implementation is materially more reliable than the initial prototype. The cross-ticker shift, partial-factor mean, `groupby.first` holding-period behavior, drift-aware turnover accounting, initial drawdown, IC denominator, monthly-gap, intermediate missing-return, low-eligibility skip, and low-volatility timing defects have been found and fixed. Rank IC, factor quantiles, the eligible-universe benchmark, cost sensitivity, and a separate official public-factor validation path are now implemented, with fourteen passing tests protecting the principal boundaries.
+The final implementation is materially more reliable than the initial prototype. The cross-ticker shift, partial-factor mean, `groupby.first` holding-period behavior, drift-aware turnover accounting, initial drawdown, IC denominator, monthly-gap, intermediate missing-return, low-eligibility skip, and low-volatility timing defects have been found and fixed. Rank IC, factor quantiles, the eligible-universe benchmark, cost sensitivity, and a separate official public-factor validation path are now implemented, with sixteen passing tests protecting the principal boundaries.
 
 The remaining blockers are security-level research-data and validation problems,
 not hidden fixes to the reported synthetic numbers. Until actual publication

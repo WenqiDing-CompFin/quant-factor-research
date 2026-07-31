@@ -328,7 +328,7 @@ The monthly result file includes `benchmark_return` and `excess_return`, and the
 
 ## 12. Automated Tests
 
-The current test suite covers fourteen behaviors:
+The current test suite covers sixteen behaviors:
 
 - synthetic data are deterministic for a fixed seed;
 - next-month returns do not cross ticker boundaries;
@@ -344,6 +344,8 @@ The current test suite covers fourteen behaviors:
 - an undersized eligible universe after portfolio formation raises rather than skipping an intermediate month.
 - the official public-factor CSV parser reads only monthly observations and converts percentages to decimals.
 - public factor summaries return finite dependence-aware statistics for a declared evaluation sample.
+- the named value-weighted monthly portfolio block is selected without mixing equal-weighted or annual sections.
+- fixed momentum reporting partitions and cross-decile monotonicity statistics are well formed.
 
 The test suite passes in the current workspace. These tests materially improve implementation reliability, but they do not test whether factors work in real markets.
 
