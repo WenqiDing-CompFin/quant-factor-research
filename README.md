@@ -380,7 +380,7 @@ def load_real_panel(source):
     # 4. return a DataFrame that passes validate_panel
 ```
 
-[TODO: specify which real data source you will integrate first]
+Tushare Pro A-share daily data is the first real data source; see the Real-World A-share Data Pipeline section.
 
 ## Out-of-Sample Testing and Overfitting Discussion
 
@@ -409,7 +409,7 @@ Planned improvements:
 - Multiple-testing correction or deflated Sharpe
 - Factor stability and turnover diagnostics across subperiods
 
-[TODO: add the specific evaluation protocol you plan to implement]
+The planned protocol is walk-forward evaluation with an expanding training origin, one final held-out period, parameters frozen before the test period, Newey-West t-statistics, and multiple-testing controls.
 
 ## Failed Experiments and Ablation Study Notes
 
@@ -421,7 +421,7 @@ This section is intentionally a research log, not a results showcase.
 | Simple sum composite vs winsorized z-score composite | Direct summation underperformed standardized combination | Standardization and outlier treatment materially affect factor combination |
 | Factor behavior in high-volatility regimes | Some factors lost monotonicity or spread stability | Regime dependence should be reported explicitly rather than averaged away |
 
-[TODO: add the exact sample period, factor definitions, IC values, and t-statistics for each failed experiment]
+Detailed sample statistics will be added after a token-based Tushare run. The qualitative lessons above are reported without fabricated performance numbers.
 
 ---
 
