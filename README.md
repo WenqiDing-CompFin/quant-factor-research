@@ -343,3 +343,82 @@ open until code, data provenance, tests, and regenerated outputs support closure
 ## Disclaimer
 
 This repository is for education and portfolio demonstration only. It is not financial advice, a solicitation, or a claim of live trading performance.
+
+---
+
+## Real-World Data Integration Guide
+
+The research engine consumes a standardized monthly panel through the data layer. The default pipeline calls `generate_synthetic_panel()`. To use real data, replace only the data layer and load a CSV that satisfies the documented schema.
+
+Conceptual minimum fields required by the research layer:
+
+| Field | Type | Requirement |
+|---|---|---|
+| `date` | datetime | Monthly observation date |
+| `asset_id` | str | Stable security identifier |
+| `return` | float | One-month return for the asset |
+| `factor_value` | float | Point-in-time factor input |
+
+The current `quant_factor.data.validate_panel` contract expects the columns `date`, `ticker`, `close`, `book_to_market`, and `roe`. A real-data adapter should therefore map vendor fields to this existing schema; the backtest and factor layers do not need to change.
+
+Suggested data sources:
+
+| Source | Market | Access | Notes |
+|---|---|---|---|
+| Tushare | China A-shares | Token required | Prices, fundamentals, calendars; prefer point-in-time fields where available |
+| Yahoo Finance | US equities | Public API | Prices and basic fundamentals; publication timing and delisting handling must be verified |
+
+The data adapter should handle corporate actions, missing months, delisting returns, and publication timing before calling `load_panel`.
+
+Minimal pseudocode:
+
+```python
+def load_real_panel(source):
+    # 1. fetch raw data from source
+    # 2. clean and adjust for corporate actions
+    # 3. map vendor fields to date, ticker, close, book_to_market, roe
+    # 4. return a DataFrame that passes validate_panel
+```
+
+[TODO: specify which real data source you will integrate first]
+
+## Out-of-Sample Testing and Overfitting Discussion
+
+The current framework already provides:
+
+- Deterministic chronological train/validation/test splits
+- Validation-based alpha selection
+- Fixed calendar partitions for public factor data
+- Held-out test evaluation opened once
+
+Common risks in multi-factor research:
+
+- **Factor decay**: predictive power weakens after publication or implementation.
+- **Overfitting**: complex factor combinations fit noise rather than economic structure.
+- **Data snooping**: repeatedly testing many factors on the same history inflates apparent significance.
+- **Regime dependence**: factor spreads and monotonicity can vary across market states.
+- **Survivorship and universe bias**: excluding delisted or newly listed names distorts returns.
+
+Current limitation: the primary stock-level pipeline still uses simulated data, so its out-of-sample statistics validate the research process, not a tradable edge.
+
+Planned improvements:
+
+- Walk-forward and rolling-origin evaluation
+- Point-in-time fundamental data
+- Delisting return handling
+- Multiple-testing correction or deflated Sharpe
+- Factor stability and turnover diagnostics across subperiods
+
+[TODO: add the specific evaluation protocol you plan to implement]
+
+## Failed Experiments and Ablation Study Notes
+
+This section is intentionally a research log, not a results showcase.
+
+| Experiment | Observation | Lesson |
+|---|---|---|
+| Technical factor screens such as volume/liquidity proxies | Rank IC was not statistically significant in the tested sample | Factors need an economic rationale plus multiple-testing awareness |
+| Simple sum composite vs winsorized z-score composite | Direct summation underperformed standardized combination | Standardization and outlier treatment materially affect factor combination |
+| Factor behavior in high-volatility regimes | Some factors lost monotonicity or spread stability | Regime dependence should be reported explicitly rather than averaged away |
+
+[TODO: add the exact sample period, factor definitions, IC values, and t-statistics for each failed experiment]
