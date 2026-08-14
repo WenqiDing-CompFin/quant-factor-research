@@ -422,3 +422,58 @@ This section is intentionally a research log, not a results showcase.
 | Factor behavior in high-volatility regimes | Some factors lost monotonicity or spread stability | Regime dependence should be reported explicitly rather than averaged away |
 
 [TODO: add the exact sample period, factor definitions, IC values, and t-statistics for each failed experiment]
+
+---
+
+## Real-World A-share Data Pipeline
+
+The repository now includes a data-layer adapter for real China A-share data through Tushare Pro. The adapter lives in `data/tushare_data_loader.py` and does not change the existing factor or backtest logic.
+
+### Dependencies
+
+```bash
+pip install tushare
+```
+
+### Set the Tushare Token
+
+```bash
+export TUSHARE_TOKEN=your_token_here
+```
+
+Never hard-code the token in source code.
+
+### Run the Pipeline on Real A-share Data
+
+```bash
+python examples/run_real_data_backtest.py \
+  --data real \
+  --start-date 20230101 \
+  --end-date 20231231 \
+  --sample-size 100
+```
+
+The example computes factor IC, quantile returns, and a long-only backtest using the existing pipeline functions. Results are written to:
+
+```text
+results/real_data_ashare/
+```
+
+The simulated dataset remains fully functional:
+
+```bash
+python examples/run_real_data_backtest.py --data simulated
+```
+
+### Limitations
+
+- Tushare Pro requires an account, token, and sufficient API points.
+- Delisted stocks are excluded by `list_status="L"`, so survivorship bias remains a risk.
+- Suspended trading days are filtered using zero-volume observations where available.
+- The adapter currently covers the A-share market only.
+- `sample_size` limits the number of tickers to reduce API usage; results depend on the selected sample.
+- Data latency, corporate-action handling, and point-in-time fundamentals must be validated before any production use.
+
+### Research Disclaimer
+
+Real-data experiments may be limited by API quota. Results are for academic research only and are not investment advice. A-share data may contain survivorship bias, and the current adapter does not reconstruct delisting returns or fully point-in-time fundamentals.
