@@ -5,16 +5,22 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import logging
 import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from quant_factor import (  # noqa: E402
+from quant_factor import (
     backtest_top_quantile,
     build_factor_panel,
     compute_factor_ic,
@@ -37,7 +43,11 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    raw = load_panel(args.input) if args.input else generate_synthetic_panel(seed=args.seed)
+    raw = (
+        load_panel(args.input)
+        if args.input
+        else generate_synthetic_panel(seed=args.seed)
+    )
     panel = build_factor_panel(raw)
     ic = compute_factor_ic(panel)
     quantile_returns = compute_quantile_returns(panel)
@@ -52,9 +62,7 @@ def main() -> None:
             "observations": ic_values.count(),
         }
     )
-    ic_summary["icir"] = (
-        ic_summary["mean_rank_ic"] / ic_summary["rank_ic_std"]
-    )
+    ic_summary["icir"] = ic_summary["mean_rank_ic"] / ic_summary["rank_ic_std"]
     ic_summary.index.name = "factor"
     monthly = backtest_top_quantile(panel, cost_bps=args.cost_bps)
     metrics = performance_metrics(monthly["net_return"])
@@ -118,8 +126,12 @@ def main() -> None:
             "cost_sensitivity_bps": [0, 5, 10, 20, 50],
         },
         "claim_boundary": (
-            "pipeline validation only" if args.input is None else
-            "user-supplied data; point-in-time validity is not established by the loader"
+            "pipeline validation only"
+            if args.input is None
+            else (
+                "user-supplied data; point-in-time validity is not "
+                "established by the loader"
+            )
         ),
     }
     with (args.output_dir / "run_manifest.json").open("w", encoding="utf-8") as handle:

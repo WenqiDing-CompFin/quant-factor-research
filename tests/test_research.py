@@ -1,5 +1,5 @@
-from pathlib import Path
 import sys
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -8,7 +8,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from quant_factor import (  # noqa: E402
+from quant_factor import (
     backtest_top_quantile,
     build_factor_panel,
     generate_synthetic_panel,
@@ -98,7 +98,9 @@ def test_turnover_accounts_for_weight_drift():
     dates = pd.to_datetime(["2020-01-31", "2020-02-29", "2020-03-31"])
     rows = []
     for date_index, date in enumerate(dates):
-        for ticker, score in zip(["A", "B", "C", "D"], [4.0, 3.0, 2.0, 1.0]):
+        for ticker, score in zip(
+            ["A", "B", "C", "D"], [4.0, 3.0, 2.0, 1.0], strict=True
+        ):
             future_return = np.nan
             if date_index == 0:
                 future_return = 1.0 if ticker == "A" else 0.0

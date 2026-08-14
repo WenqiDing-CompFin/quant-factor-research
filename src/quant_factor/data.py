@@ -7,7 +7,6 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-
 REQUIRED_COLUMNS = {"date", "ticker", "close", "book_to_market", "roe"}
 
 
@@ -72,8 +71,12 @@ def validate_panel(df: pd.DataFrame) -> None:
         raise ValueError("date must contain valid calendar dates.")
     if (df["close"].dropna() <= 0).any():
         raise ValueError("close must be positive when present.")
-    ordered = df.assign(_validated_date=dates).sort_values(["ticker", "_validated_date"])
-    for ticker, ticker_dates in ordered.groupby("ticker", sort=False)["_validated_date"]:
+    ordered = df.assign(_validated_date=dates).sort_values(
+        ["ticker", "_validated_date"]
+    )
+    for ticker, ticker_dates in ordered.groupby("ticker", sort=False)[
+        "_validated_date"
+    ]:
         month_number = ticker_dates.dt.year * 12 + ticker_dates.dt.month
         if month_number.diff().dropna().ne(1).any():
             raise ValueError(

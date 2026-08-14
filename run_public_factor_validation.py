@@ -4,15 +4,21 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 from pathlib import Path
 
 import matplotlib.pyplot as plt
 
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)s %(name)s %(message)s",
+)
+
 ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT / "src"))
 
-from quant_factor.public_data import (  # noqa: E402
+from quant_factor.public_data import (
     PUBLIC_FACTOR_COLUMNS,
     load_public_factor_returns,
     load_public_momentum_portfolios,
@@ -45,9 +51,7 @@ def main() -> None:
     )
     summary = public_factor_summary(returns, start_date=args.start_date)
     subperiod = public_factor_subperiod_summary(returns)
-    momentum_summary, momentum_deciles = momentum_decile_validation(
-        momentum_portfolios
-    )
+    momentum_summary, momentum_deciles = momentum_decile_validation(momentum_portfolios)
     sample = returns.loc[returns["date"].ge(args.start_date)].copy()
     correlations = sample.loc[:, PUBLIC_FACTOR_COLUMNS].corr()
     csv_options = {"lineterminator": "\n"}
@@ -84,7 +88,9 @@ def main() -> None:
             "untouched prospective test."
         ),
     }
-    with (args.output_dir / "source_metadata.json").open("w", encoding="utf-8") as handle:
+    with (args.output_dir / "source_metadata.json").open(
+        "w", encoding="utf-8"
+    ) as handle:
         json.dump(metadata, handle, indent=2)
 
     wealth = (1.0 + sample.set_index("date")[list(PUBLIC_FACTOR_COLUMNS)]).cumprod()

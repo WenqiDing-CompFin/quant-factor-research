@@ -7,15 +7,16 @@ import pandas as pd
 
 from .data import validate_panel
 
-
 FACTOR_COLUMNS = ("momentum", "value", "quality", "low_volatility")
 
 
 def _winsorized_zscore(series: pd.Series) -> pd.Series:
+    """Return a cross-sectional 1st/99th percentile winsorized z-score."""
     valid = series.dropna()
     if len(valid) < 3:
         return pd.Series(np.nan, index=series.index, dtype=float)
     lower, upper = valid.quantile([0.01, 0.99])
+    # Clip extreme observations before standardizing within the date.
     clipped = series.clip(lower, upper)
     scale = clipped.std(ddof=0)
     if pd.isna(scale) or scale == 0:
@@ -23,7 +24,9 @@ def _winsorized_zscore(series: pd.Series) -> pd.Series:
     return (clipped - clipped.mean()) / scale
 
 
-def build_factor_panel(df: pd.DataFrame, fundamental_lag_months: int = 3) -> pd.DataFrame:
+def build_factor_panel(
+    df: pd.DataFrame, fundamental_lag_months: int = 3
+) -> pd.DataFrame:
     """Build monthly signals available at each month end.
 
     Momentum is P(t-1) / P(t-12) - 1, which skips the most recent month.
@@ -64,6 +67,7 @@ def build_factor_panel(df: pd.DataFrame, fundamental_lag_months: int = 3) -> pd.
 
 
 def _rank_correlation(group: pd.DataFrame, factor: str) -> float:
+    """Compute Spearman-style rank IC for one cross-section."""
     usable = group[[factor, "future_return_1m"]].dropna()
     if len(usable) < 3:
         return float("nan")
@@ -75,6 +79,7 @@ def _rank_correlation(group: pd.DataFrame, factor: str) -> float:
 def compute_factor_ic(
     panel: pd.DataFrame, factors: tuple[str, ...] = FACTOR_COLUMNS
 ) -> pd.DataFrame:
+    """Return monthly rank IC for each factor against next-month returns."""
     records = []
     for date, cross_section in panel.groupby("date", sort=True):
         row: dict[str, object] = {"date": date}

@@ -6,10 +6,14 @@ import pandas as pd
 
 
 def _one_way_turnover(previous: dict[str, float], current: dict[str, float]) -> float:
+    """Return one-way turnover between prior and target portfolio weights."""
     if not previous:
         return sum(current.values())
     names = set(previous).union(current)
-    return 0.5 * sum(abs(current.get(name, 0.0) - previous.get(name, 0.0)) for name in names)
+    # One-way turnover is half the absolute weight change; initial entry is 100%.
+    return 0.5 * sum(
+        abs(current.get(name, 0.0) - previous.get(name, 0.0)) for name in names
+    )
 
 
 def backtest_top_quantile(
@@ -22,6 +26,8 @@ def backtest_top_quantile(
 
     Costs are applied to one-way turnover. Missing next-month returns among
     selected stocks raise an error to avoid silently introducing survivor bias.
+    The portfolio is long-only equal weight; risk controls can be layered on
+    top via ``quant_factor.risk``.
     """
     if not 0 < top_fraction <= 1:
         raise ValueError("top_fraction must be in (0, 1].")
@@ -35,6 +41,7 @@ def backtest_top_quantile(
     backtest_started = False
     rows = []
     for date, cross_section in panel.groupby("date", sort=True):
+        # Only names with a composite score are tradable at this date.
         eligible = cross_section.dropna(subset=["composite_score"])
         if len(eligible) < min_stocks:
             if backtest_started:
@@ -50,6 +57,7 @@ def backtest_top_quantile(
                 f"All future returns are missing on non-final date {date}."
             )
         if eligible["future_return_1m"].isna().any():
+            # Refuse to silently drop names that exit before the next month.
             missing_names = eligible.loc[
                 eligible["future_return_1m"].isna(), "ticker"
             ].tolist()

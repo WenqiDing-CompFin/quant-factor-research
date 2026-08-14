@@ -17,6 +17,8 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: pip
       - run: python -m pip install -e ".[dev]"
+      - run: ruff check .
+      - run: ruff format --check .
       - run: python -m pytest -q
       - run: python run_research.py --output-dir reproduced-results
       - name: Verify required artifacts

@@ -5,8 +5,11 @@ from __future__ import annotations
 import csv
 import hashlib
 import io
+import logging
 import math
+import os
 import re
+import time
 import urllib.request
 import zipfile
 from pathlib import Path
@@ -16,6 +19,7 @@ import pandas as pd
 
 from .metrics import performance_metrics
 
+logger = logging.getLogger(__name__)
 
 OFFICIAL_SOURCE_PAGE = (
     "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html"
@@ -41,6 +45,32 @@ PUBLIC_FACTOR_COLUMNS = (
     "momentum",
 )
 MOMENTUM_DECILE_COLUMNS = tuple(f"p{index:02d}" for index in range(1, 11))
+
+
+def _download_with_retry(
+    url: str,
+    timeout_seconds: int = 30,
+    retries: int = 3,
+) -> bytes:
+    """Download a URL with bounded retries and exponential backoff."""
+    for attempt in range(1, retries + 1):
+        try:
+            request = urllib.request.Request(
+                url,
+                headers={
+                    "User-Agent": ("quant-factor-research/0.1 public-data validation")
+                },
+            )
+            with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
+                payload = response.read()
+            logger.info("Downloaded %s (%d bytes)", url, len(payload))
+            return payload
+        except Exception:
+            logger.exception("Download attempt %d/%d failed: %s", attempt, retries, url)
+            if attempt == retries:
+                raise
+            time.sleep(2**attempt)
+    raise RuntimeError("unreachable")
 
 
 def parse_french_monthly_csv(
@@ -143,21 +173,29 @@ def _read_archive(
     cache_dir.mkdir(parents=True, exist_ok=True)
     archive_path = cache_dir / url.rsplit("/", 1)[-1]
     if archive_path.exists():
+        logger.info("Using cached archive %s", archive_path)
         payload = archive_path.read_bytes()
     else:
-        request = urllib.request.Request(
-            url,
-            headers={"User-Agent": "quant-factor-research/0.1 public-data validation"},
+        payload = _download_with_retry(url, timeout_seconds)
+        temporary_path = archive_path.with_suffix(".part")
+        temporary_path.write_bytes(payload)
+        os.replace(temporary_path, archive_path)
+    try:
+        with zipfile.ZipFile(io.BytesIO(payload)) as archive:
+            csv_members = [
+                name for name in archive.namelist() if name.lower().endswith(".csv")
+            ]
+            if len(csv_members) != 1:
+                raise ValueError(
+                    f"Expected one CSV in {archive_path.name}, found {csv_members}"
+                )
+            member = csv_members[0]
+            text = archive.read(member).decode("cp1252")
+    except zipfile.BadZipFile:
+        logger.exception(
+            "Corrupt archive %s; delete it and rerun to redownload", archive_path
         )
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
-            payload = response.read()
-        archive_path.write_bytes(payload)
-    with zipfile.ZipFile(io.BytesIO(payload)) as archive:
-        csv_members = [name for name in archive.namelist() if name.lower().endswith(".csv")]
-        if len(csv_members) != 1:
-            raise ValueError(f"Expected one CSV in {archive_path.name}, found {csv_members}")
-        member = csv_members[0]
-        text = archive.read(member).decode("cp1252")
+        raise
     metadata = {
         "url": url,
         "cache_file": archive_path.name,
@@ -215,9 +253,7 @@ def load_public_momentum_portfolios(
     cache_dir: str | Path = "data/raw/fama_french",
 ) -> tuple[pd.DataFrame, dict[str, object]]:
     """Load official value-weighted portfolios sorted on prior 12-to-2 return."""
-    text, archive_metadata = _read_archive(
-        MOMENTUM_PORTFOLIOS_URL, Path(cache_dir)
-    )
+    text, archive_metadata = _read_archive(MOMENTUM_PORTFOLIOS_URL, Path(cache_dir))
     returns = parse_french_portfolio_block(
         text,
         block_title="Value Weight Returns -- Monthly",
@@ -291,7 +327,9 @@ def public_factor_summary(
                 "annualized_volatility": float(monthly_volatility * math.sqrt(12.0)),
                 "sharpe_zero_rf": float(
                     values.mean() / monthly_volatility * math.sqrt(12.0)
-                ) if monthly_volatility > 1e-12 else float("nan"),
+                )
+                if monthly_volatility > 1e-12
+                else float("nan"),
                 "max_drawdown": float(drawdown.min()),
                 "positive_month_ratio": float(values.gt(0).mean()),
                 "newey_west_mean_tstat": newey_west_mean_tstat(
@@ -368,14 +406,10 @@ def momentum_decile_validation(
                 "p10_minus_p01_annualized_volatility": float(
                     spread.std(ddof=1) * math.sqrt(12.0)
                 ),
-                "p10_minus_p01_sharpe_zero_rf": spread_metrics[
-                    "sharpe_zero_rf"
-                ],
+                "p10_minus_p01_sharpe_zero_rf": spread_metrics["sharpe_zero_rf"],
                 "p10_minus_p01_max_drawdown": spread_metrics["max_drawdown"],
                 "p10_minus_p01_positive_month_ratio": float(spread.gt(0).mean()),
-                "p10_minus_p01_newey_west_tstat": newey_west_mean_tstat(
-                    spread, lags=6
-                ),
+                "p10_minus_p01_newey_west_tstat": newey_west_mean_tstat(spread, lags=6),
                 "mean_return_rank_correlation": float(monotonicity),
                 "positive_adjacent_step_ratio": float((adjacent_steps > 0).mean()),
             }
