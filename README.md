@@ -453,7 +453,7 @@ python examples/run_real_data_backtest.py \
   --sample-size 100
 ```
 
-The example computes factor IC, quantile returns, and a long-only backtest using the existing pipeline functions. Results are written to:
+The example computes factor IC, quantile returns, a long-only backtest, and an equity-curve chart using the existing pipeline functions. Results are written to:
 
 ```text
 results/real_data_ashare/

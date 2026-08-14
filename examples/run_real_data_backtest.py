@@ -12,6 +12,7 @@ import logging
 import sys
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -104,6 +105,20 @@ def save_outputs(
     quantiles.to_csv(output_dir / "factor_quantile_returns.csv", index=False)
     backtest.to_csv(output_dir / "period_returns.csv", index=False)
     pd.DataFrame([metrics]).to_csv(output_dir / "metrics.csv", index=False)
+
+    indexed = backtest.set_index("signal_date")
+    wealth = (1.0 + indexed["net_return"]).cumprod()
+    benchmark = (1.0 + indexed["benchmark_return"]).cumprod()
+    fig, ax = plt.subplots(figsize=(9, 5))
+    wealth.plot(ax=ax, label="Strategy")
+    benchmark.plot(ax=ax, label="Benchmark")
+    ax.set_title("Equity curve")
+    ax.set_ylabel("Growth of 1.0")
+    ax.grid(alpha=0.25)
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(output_dir / "equity_curve.png", dpi=160)
+    plt.close(fig)
     return output_dir
 
 
