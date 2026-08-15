@@ -84,7 +84,7 @@ The repository implements an end-to-end research baseline:
 - 0/5/10/20/50 bps cost-sensitivity analysis;
 - portfolio return, volatility, zero-risk-free-rate Sharpe ratio, drawdown, hit-rate, turnover, and cost outputs;
 - official five-factor and momentum archive parsing, provenance hashes, fixed-subperiod analysis, and Newey-West mean inference;
-- sixteen automated tests covering the synthetic pipeline and offline public-data parsing and statistics;
+- twenty-one automated tests covering the synthetic pipeline, risk controls, and offline public-data parsing and statistics;
 - reproducible CSV results and an equity-curve chart written to `results/`.
 
 ## Research Question
@@ -131,9 +131,15 @@ Rank IC is computed as the correlation between cross-sectional factor ranks and 
 ```text
 quant-factor-research/
 |-- README.md
+|-- environment.yml
+|-- pyproject.toml
 |-- requirements.txt
+|-- requirements-dev.txt
 |-- run_research.py
 |-- run_public_factor_validation.py
+|-- data/
+|   |-- README.md
+|   `-- tushare_data_loader.py
 |-- docs/
 |   |-- factor_research_report.md
 |   |-- failure_analysis.md
@@ -143,6 +149,8 @@ quant-factor-research/
 |   `-- logs/
 |       |-- daily_report_template.md
 |       `-- weekly_report_template.md
+|-- examples/
+|   `-- run_real_data_backtest.py
 |-- results/
 |   |-- cost_sensitivity.csv
 |   |-- equity_curve.png
@@ -161,10 +169,12 @@ quant-factor-research/
 |       |-- data.py
 |       |-- factors.py
 |       |-- metrics.py
-|       `-- public_data.py
+|       |-- public_data.py
+|       `-- risk.py
 `-- tests/
     |-- test_research.py
-    `-- test_public_data.py
+    |-- test_public_data.py
+    `-- test_risk.py
 ```
 
 ## Installation
@@ -181,7 +191,7 @@ Activate the environment, then install the pinned dependency ranges:
 python -m pip install -r requirements.txt
 ```
 
-Required packages are NumPy, pandas, Matplotlib, and pytest. Python 3.10 or later is recommended.
+Required packages are NumPy, pandas, Matplotlib, SciPy, and bottleneck. Python 3.10 or later is recommended.
 
 ## Reproduce the Synthetic Baseline
 
@@ -200,7 +210,7 @@ python -m pytest -q
 Expected test summary:
 
 ```text
-16 passed
+21 passed
 ```
 
 Change the transaction-cost assumption or synthetic seed:
@@ -285,7 +295,7 @@ The pipeline reruns the complete portfolio calculation at five cost assumptions.
 
 ## Test Coverage
 
-The sixteen tests verify that:
+The twenty-one tests verify that:
 
 1. synthetic generation is deterministic for a fixed seed;
 2. future returns do not leak across ticker boundaries;
@@ -303,6 +313,11 @@ The sixteen tests verify that:
 14. real factor summaries produce finite dependence-aware statistics over the declared period.
 15. the named value-weighted monthly portfolio block is selected without mixing equal-weighted or annual sections.
 16. fixed momentum reporting partitions and cross-decile monotonicity statistics are well formed.
+17. volatility targeting scales a raw weight toward the target volatility;
+18. volatility targeting respects the maximum single-name weight cap;
+19. volatility targeting returns zero for missing or non-positive realized volatility;
+20. the drawdown stop latches to zero after a drawdown breach;
+21. a corrupt cached public-data archive is deleted and redownloaded automatically.
 
 The tests reduce implementation risk but do not validate the economic hypothesis or prove the absence of every form of leakage.
 

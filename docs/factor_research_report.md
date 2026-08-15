@@ -328,7 +328,7 @@ The monthly result file includes `benchmark_return` and `excess_return`, and the
 
 ## 12. Automated Tests
 
-The current test suite covers sixteen behaviors:
+The current test suite covers twenty-one behaviors:
 
 - synthetic data are deterministic for a fixed seed;
 - next-month returns do not cross ticker boundaries;
@@ -346,6 +346,11 @@ The current test suite covers sixteen behaviors:
 - public factor summaries return finite dependence-aware statistics for a declared evaluation sample.
 - the named value-weighted monthly portfolio block is selected without mixing equal-weighted or annual sections.
 - fixed momentum reporting partitions and cross-decile monotonicity statistics are well formed.
+- volatility targeting scales a raw weight toward the target and respects the maximum weight cap.
+- volatility targeting returns zero when realized volatility is missing or non-positive.
+- the drawdown stop latches to zero after a breach.
+- a corrupt cached archive is removed and replaced with a fresh download.
+- corrupt-cache recovery keeps the verified fresh payload for provenance hashing.
 
 The test suite passes in the current workspace. These tests materially improve implementation reliability, but they do not test whether factors work in real markets.
 

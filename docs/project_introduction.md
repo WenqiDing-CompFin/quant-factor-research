@@ -2,7 +2,7 @@
 
 ## One-Sentence Version
 
-I built a reproducible Python pipeline that constructs four monthly equity factors, evaluates Rank IC and five-quantile returns, forms a top-quintile portfolio against an equal-weight benchmark, applies drift-aware one-way-turnover costs, and exports auditable research artifacts with sixteen automated tests. A separate module downloads official U.S. factor portfolio returns for real-data regime and inference checks.
+I built a reproducible Python pipeline that constructs four monthly equity factors, evaluates Rank IC and five-quantile returns, forms a top-quintile portfolio against an equal-weight benchmark, applies drift-aware one-way-turnover costs, and exports auditable research artifacts with twenty-one automated tests. A separate module downloads official U.S. factor portfolio returns for real-data regime and inference checks.
 
 ## 30-Second Interview Version
 
@@ -14,7 +14,7 @@ The project began with a practical question: how do I turn several factor hypoth
 
 The diagnostic layer calculates monthly Rank IC for each factor and summarizes its mean, standard deviation, valid-observation positive ratio, observation count, and ICIR. It also reports Q1-Q5 equal-weight next-month returns and the Q5-minus-Q1 spread. The portfolio layer selects the top quintile, equal-weights the names, computes weight-based one-way turnover, deducts transaction costs, and compares the resulting net return with the gross equal-weight eligible-universe benchmark. The runner automatically evaluates 0, 5, 10, 20, and 50 bps cost assumptions and exports seven CSV files plus an equity-curve chart.
 
-I also wrote sixteen tests around the failure modes that concern me most at this stage: deterministic generation, return leakage across securities, momentum lookback timing across multiple tickers, composite completeness, partial and all-missing future returns, gaps in monthly observations, post-start universe coverage, initial and drift-aware turnover, annualization, first-period drawdown, offline public-data parsing and statistics, named portfolio-block selection, and fixed-period momentum monotonicity. The backtest raises an error when an otherwise eligible security is missing its next-period return, rather than silently dropping it and introducing a survivor-style bias.
+I also wrote twenty-one tests around the failure modes that concern me most at this stage: deterministic generation, return leakage across securities, momentum lookback timing across multiple tickers, composite completeness, partial and all-missing future returns, gaps in monthly observations, post-start universe coverage, initial and drift-aware turnover, annualization, first-period drawdown, volatility targeting, drawdown-stop behavior, corrupt-cache recovery, offline public-data parsing and statistics, named portfolio-block selection, and fixed-period momentum monotonicity. The backtest raises an error when an otherwise eligible security is missing its next-period return, rather than silently dropping it and introducing a survivor-style bias.
 
 The most important boundary is that all stock-level strategy evidence is synthetic.
 The separate real-data artifact uses official constructed factor portfolios and
@@ -50,7 +50,7 @@ The benchmark is the equal-weight next-month return of all securities eligible f
 
 ### What do the tests prove?
 
-They verify sixteen specific implementation invariants. They do not prove the stock-selection hypothesis, fully validate execution timing, eliminate all leakage risk, or substitute for data and research review.
+They verify twenty-one specific implementation invariants. They do not prove the stock-selection hypothesis, fully validate execution timing, eliminate all leakage risk, or substitute for data and research review.
 
 ### What would you do next?
 

@@ -1,4 +1,6 @@
+import io
 import sys
+import zipfile
 from pathlib import Path
 
 import numpy as np
@@ -9,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
 from quant_factor.public_data import (
+    FIVE_FACTOR_URL,
+    _read_archive,
     momentum_decile_validation,
     parse_french_monthly_csv,
     parse_french_portfolio_block,
@@ -83,3 +87,21 @@ def test_momentum_validation_reports_fixed_holdout_and_monotonicity():
     assert np.allclose(summary["mean_return_rank_correlation"], 1.0)
     assert summary["p10_minus_p01_annualized_mean"].gt(0).all()
     assert len(deciles) == 30
+
+
+def test_corrupt_cache_is_replaced_with_fresh_download(tmp_path, monkeypatch):
+    archive_path = tmp_path / FIVE_FACTOR_URL.rsplit("/", 1)[-1]
+    archive_path.write_bytes(b"not a zip file")
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w") as archive:
+        archive.writestr("factors.csv", "fixture\n,Mkt-RF\n199001,1.00\n")
+    monkeypatch.setattr(
+        "quant_factor.public_data._download_with_retry",
+        lambda *args, **kwargs: buffer.getvalue(),
+    )
+
+    text, metadata = _read_archive(FIVE_FACTOR_URL, tmp_path)
+    assert "199001" in text
+    assert archive_path.read_bytes() == buffer.getvalue()
+    assert metadata["archive_member"] == "factors.csv"
