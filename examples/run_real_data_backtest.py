@@ -86,7 +86,8 @@ def run_real(args: argparse.Namespace) -> tuple[pd.DataFrame, ...]:
         cost_bps=args.cost_bps,
         min_stocks=args.min_stocks,
     )
-    metrics = performance_metrics(backtest["net_return"])
+    metrics = performance_metrics(backtest["net_return"], periods_per_year=252)
+    metrics["positive_period_ratio"] = metrics.pop("positive_month_ratio")
     return panel, ic, quantiles, backtest, metrics
 
 

@@ -99,31 +99,65 @@ def _load_universe(
 def _build_ticker_panel(
     bars: pd.DataFrame | None,
     asset_id: str,
+    trading_dates: pd.DatetimeIndex,
 ) -> pd.DataFrame:
-    """Convert one ticker's qfq bars into the standard research panel."""
+    """Align daily bars to trading sessions without filling missing prices."""
     if bars is None or bars.empty:
-        return pd.DataFrame()
+        raise ValueError(f"No bars returned for {asset_id}; cause is unknown")
 
     frame = bars.copy()
     frame = frame.rename(columns={"trade_date": "date", "ts_code": "asset_id"})
     frame["date"] = pd.to_datetime(frame["date"], format="%Y%m%d", errors="coerce")
-    frame["asset_id"] = frame["asset_id"].astype(str)
-    frame["ticker"] = frame["asset_id"]
+    if frame["date"].isna().any() or frame["date"].duplicated().any():
+        raise ValueError(f"Invalid or duplicate bar dates for {asset_id}")
+    if not frame["asset_id"].eq(asset_id).all():
+        raise ValueError(f"Bar identity mismatch for {asset_id}")
+    if not frame["date"].isin(trading_dates).all():
+        raise ValueError(f"Bar dates outside trading calendar for {asset_id}")
     frame["close"] = pd.to_numeric(frame["close"], errors="coerce")
-    frame = frame.dropna(subset=["date", "close"])
-    frame = frame.loc[frame["close"] > 0]
+    frame.loc[~np.isfinite(frame["close"]) | (frame["close"] <= 0), "close"] = np.nan
 
     if "vol" in frame.columns:
-        frame["vol"] = pd.to_numeric(frame["vol"], errors="coerce").fillna(0.0)
-        frame = frame.loc[frame["vol"] > 0]
+        volume = pd.to_numeric(frame["vol"], errors="coerce")
+        frame.loc[~np.isfinite(volume) | (volume <= 0), "close"] = np.nan
 
-    frame = frame.sort_values(["asset_id", "date"]).reset_index(drop=True)
-    grouped = frame.groupby("asset_id", sort=False)["close"]
-    frame["factor_value"] = grouped.pct_change(MOMENTUM_WINDOW)
-    frame["return"] = grouped.shift(-1).div(frame["close"]).sub(1)
+    frame = (
+        frame.set_index("date").reindex(trading_dates).rename_axis("date").reset_index()
+    )
+    frame["asset_id"] = asset_id
+    frame["ticker"] = asset_id
+    close = frame["close"]
+    frame["factor_value"] = close.pct_change(MOMENTUM_WINDOW, fill_method=None)
+    frame["return"] = close.shift(-1).div(close).sub(1)
     frame["future_return_1m"] = frame["return"]
     frame["composite_score"] = frame["factor_value"]
-    return frame.dropna(subset=["factor_value", "return"])
+    return frame
+
+
+def _load_trading_dates(pro: object, start: str, end: str) -> pd.DatetimeIndex:
+    """Require a complete daily calendar, including closed days, before alignment."""
+    calendar = _call_with_retry(
+        pro.trade_cal, exchange="SSE", start_date=start, end_date=end
+    )
+    if (
+        calendar is None
+        or calendar.empty
+        or not {"cal_date", "is_open"}.issubset(calendar.columns)
+    ):
+        raise ValueError("Tushare trading calendar is missing or incomplete")
+    dates = pd.to_datetime(calendar["cal_date"], format="%Y%m%d", errors="coerce")
+    flags = pd.to_numeric(calendar["is_open"], errors="coerce")
+    expected = pd.date_range(pd.Timestamp(start), pd.Timestamp(end), freq="D")
+    if dates.isna().any() or dates.duplicated().any() or not flags.isin([0, 1]).all():
+        raise ValueError("Tushare trading calendar has invalid dates or open flags")
+    if set(dates) != set(expected):
+        raise ValueError(
+            "Tushare trading calendar does not cover every requested calendar day"
+        )
+    trading_dates = pd.DatetimeIndex(dates[flags.eq(1)]).sort_values()
+    if len(trading_dates) < 2:
+        raise ValueError("At least two trading sessions are required")
+    return trading_dates
 
 
 def load_real_a_share_panel(
@@ -154,6 +188,7 @@ def load_real_a_share_panel(
     ts.set_token(token)
     pro = ts.pro_api(token)
     codes = _load_universe(pro, sample_size)
+    trading_dates = _load_trading_dates(pro, start, end)
     logger.info("Loading %d A-share tickers from %s to %s", len(codes), start, end)
 
     frames: list[pd.DataFrame] = []
@@ -166,11 +201,11 @@ def load_real_a_share_panel(
                 start_date=start,
                 end_date=end,
             )
-            ticker_frame = _build_ticker_panel(bars, code)
+            ticker_frame = _build_ticker_panel(bars, code, trading_dates)
             if not ticker_frame.empty:
                 frames.append(ticker_frame)
-        except Exception:
-            logger.exception("Skipping ticker %s after repeated failures", code)
+        except Exception as exc:
+            raise RuntimeError(f"Failed to load or validate ticker {code}") from exc
 
     if not frames:
         raise RuntimeError(
@@ -191,11 +226,7 @@ def load_real_a_share_panel(
             "composite_score",
         ]
     ]
-    panel = (
-        panel.dropna(subset=["factor_value", "return"])
-        .sort_values(["date", "asset_id"])
-        .reset_index(drop=True)
-    )
+    panel = panel.sort_values(["date", "asset_id"]).reset_index(drop=True)
     logger.info(
         "Loaded real A-share panel with %d rows and %d tickers",
         len(panel),

@@ -84,7 +84,7 @@ The repository implements an end-to-end research baseline:
 - 0/5/10/20/50 bps cost-sensitivity analysis;
 - portfolio return, volatility, zero-risk-free-rate Sharpe ratio, drawdown, hit-rate, turnover, and cost outputs;
 - official five-factor and momentum archive parsing, provenance hashes, fixed-subperiod analysis, and Newey-West mean inference;
-- twenty-one automated tests covering the synthetic pipeline, risk controls, and offline public-data parsing and statistics;
+- automated tests covering the synthetic pipeline, daily data safeguards, risk controls, and offline public-data parsing and statistics;
 - reproducible CSV results and an equity-curve chart written to `results/`.
 
 ## Research Question
@@ -295,7 +295,7 @@ The pipeline reruns the complete portfolio calculation at five cost assumptions.
 
 ## Test Coverage
 
-The twenty-one tests verify that:
+The original regression checks verify that:
 
 1. synthetic generation is deterministic for a fixed seed;
 2. future returns do not leak across ticker boundaries;
@@ -399,12 +399,10 @@ Tushare Pro A-share daily data is the first real data source; see the Real-World
 
 ## Out-of-Sample Testing and Overfitting Discussion
 
-The current framework already provides:
-
-- Deterministic chronological train/validation/test splits
-- Validation-based alpha selection
-- Fixed calendar partitions for public factor data
-- Held-out test evaluation opened once
+The public factor module reports fixed retrospective calendar partitions.
+The stock-level synthetic pipeline has no train/validation/test split and does
+not implement validation-based parameter selection. The published later-period
+statistics have already been inspected and are not a fresh untouched test.
 
 Common risks in multi-factor research:
 
@@ -414,7 +412,8 @@ Common risks in multi-factor research:
 - **Regime dependence**: factor spreads and monotonicity can vary across market states.
 - **Survivorship and universe bias**: excluding delisted or newly listed names distorts returns.
 
-Current limitation: the primary stock-level pipeline still uses simulated data, so its out-of-sample statistics validate the research process, not a tradable edge.
+Current limitation: the primary stock-level pipeline still uses simulated data;
+its statistics validate the research process, not a tradable edge.
 
 Planned improvements:
 
@@ -428,21 +427,32 @@ The planned protocol is walk-forward evaluation with an expanding training origi
 
 ## Failed Experiments and Ablation Study Notes
 
-This section is intentionally a research log, not a results showcase.
+The following are hypotheses and potential failure modes, not verified results
+from a documented experiment. Detailed data, configuration, and results are not
+available here and should not be attributed to a completed real-data study.
 
 | Experiment | Observation | Lesson |
 |---|---|---|
-| Technical factor screens such as volume/liquidity proxies | Rank IC was not statistically significant in the tested sample | Factors need an economic rationale plus multiple-testing awareness |
-| Simple sum composite vs winsorized z-score composite | Direct summation underperformed standardized combination | Standardization and outlier treatment materially affect factor combination |
-| Factor behavior in high-volatility regimes | Some factors lost monotonicity or spread stability | Regime dependence should be reported explicitly rather than averaged away |
+| Technical factor screens such as volume/liquidity proxies | Is Rank IC stable after multiple-testing controls? | Specify the economic rationale and comparison family |
+| Simple sum composite vs winsorized z-score composite | Does standardization affect the comparison? | Fix units and outlier treatment before evaluating |
+| Factor behavior in high-volatility regimes | Are spreads and monotonicity stable? | Report regimes without selecting dates after viewing results |
 
-Detailed sample statistics will be added after a token-based Tushare run. The qualitative lessons above are reported without fabricated performance numbers.
+These questions remain open until a documented, independently auditable experiment is available.
 
 ---
 
 ## Real-World A-share Data Pipeline
 
 The repository now includes a data-layer adapter for real China A-share data through Tushare Pro. The adapter lives in `data/tushare_data_loader.py` and does not change the existing factor or backtest logic.
+
+The example uses daily bars, a 20-session price signal, and next-session close
+returns; the legacy internal name `future_return_1m` means one session here, not
+one month. It aligns observations to the provider's trading calendar without
+filling missing bars and fails when eligible names have missing next-session
+returns. Daily risk metrics use 252 periods per year as an approximation, not the
+monthly default. The current-listed universe, corporate actions, point-in-time
+adjustments, execution prices, suspensions and delistings remain unverified.
+Calendar and API access have been tested with fixtures only, not a real token.
 
 ### Dependencies
 
